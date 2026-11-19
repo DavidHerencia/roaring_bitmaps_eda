@@ -1,0 +1,394 @@
+{
+  "validation": "passed",
+  "queries": 12,
+  "query_samples": 360,
+  "synthetic_samples": 360,
+  "build": {
+    "samples": 3,
+    "min_ns": 431298985,
+    "median_ns": 435204351,
+    "p95_ns": 445034394,
+    "max_ns": 445034394
+  },
+  "query_timing": [
+    {
+      "query_id": "term_rare",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 17035337,
+      "median_ns": 18521531,
+      "p95_ns": 20753493,
+      "max_ns": 20753493
+    },
+    {
+      "query_id": "term_rare",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 336,
+      "median_ns": 3099,
+      "p95_ns": 4549,
+      "max_ns": 4549
+    },
+    {
+      "query_id": "term_median",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 20773173,
+      "median_ns": 22196464,
+      "p95_ns": 28692855,
+      "max_ns": 28692855
+    },
+    {
+      "query_id": "term_median",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 735,
+      "median_ns": 813,
+      "p95_ns": 18273,
+      "max_ns": 18273
+    },
+    {
+      "query_id": "term_frequent",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 20698279,
+      "median_ns": 24437816,
+      "p95_ns": 27308053,
+      "max_ns": 27308053
+    },
+    {
+      "query_id": "term_frequent",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 174024,
+      "median_ns": 192829,
+      "p95_ns": 303793,
+      "max_ns": 303793
+    },
+    {
+      "query_id": "country_rare",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 2092792,
+      "median_ns": 2165715,
+      "p95_ns": 4357595,
+      "max_ns": 4357595
+    },
+    {
+      "query_id": "country_rare",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 167,
+      "median_ns": 301,
+      "p95_ns": 2258,
+      "max_ns": 2258
+    },
+    {
+      "query_id": "country_frequent",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 3174520,
+      "median_ns": 4828577,
+      "p95_ns": 10161466,
+      "max_ns": 10161466
+    },
+    {
+      "query_id": "country_frequent",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 760725,
+      "median_ns": 850712,
+      "p95_ns": 1269935,
+      "max_ns": 1269935
+    },
+    {
+      "query_id": "and_rare",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 16296104,
+      "median_ns": 18361628,
+      "p95_ns": 20395179,
+      "max_ns": 20395179
+    },
+    {
+      "query_id": "and_rare",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 389,
+      "median_ns": 590,
+      "p95_ns": 7620,
+      "max_ns": 7620
+    },
+    {
+      "query_id": "and_median",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 21000828,
+      "median_ns": 22799437,
+      "p95_ns": 28626792,
+      "max_ns": 28626792
+    },
+    {
+      "query_id": "and_median",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 1322,
+      "median_ns": 9408,
+      "p95_ns": 22152,
+      "max_ns": 22152
+    },
+    {
+      "query_id": "and_frequent",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 19337174,
+      "median_ns": 21142518,
+      "p95_ns": 22062660,
+      "max_ns": 22062660
+    },
+    {
+      "query_id": "and_frequent",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 237109,
+      "median_ns": 258356,
+      "p95_ns": 346280,
+      "max_ns": 346280
+    },
+    {
+      "query_id": "or_rare_median",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 30278596,
+      "median_ns": 30897691,
+      "p95_ns": 35080178,
+      "max_ns": 35080178
+    },
+    {
+      "query_id": "or_rare_median",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 960,
+      "median_ns": 7581,
+      "p95_ns": 10411,
+      "max_ns": 10411
+    },
+    {
+      "query_id": "or_rare_frequent",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 28219392,
+      "median_ns": 28971346,
+      "p95_ns": 30482693,
+      "max_ns": 30482693
+    },
+    {
+      "query_id": "or_rare_frequent",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 171008,
+      "median_ns": 183908,
+      "p95_ns": 334373,
+      "max_ns": 334373
+    },
+    {
+      "query_id": "or_median_frequent",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 31671209,
+      "median_ns": 32702340,
+      "p95_ns": 35721898,
+      "max_ns": 35721898
+    },
+    {
+      "query_id": "or_median_frequent",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 167924,
+      "median_ns": 194826,
+      "p95_ns": 336383,
+      "max_ns": 336383
+    },
+    {
+      "query_id": "term_missing",
+      "method": "scan",
+      "samples": 15,
+      "min_ns": 13252301,
+      "median_ns": 14415989,
+      "p95_ns": 17402068,
+      "max_ns": 17402068
+    },
+    {
+      "query_id": "term_missing",
+      "method": "roaring",
+      "samples": 15,
+      "min_ns": 194,
+      "median_ns": 287,
+      "p95_ns": 3867,
+      "max_ns": 3867
+    }
+  ],
+  "space": [
+    {
+      "namespace": "term",
+      "postings": 2310,
+      "total_cardinality": 2400823,
+      "blocks": 16347,
+      "key_bytes": 32694,
+      "payload_bytes": 4613058,
+      "metadata_bytes": 938178,
+      "allocated_bytes": 7947058,
+      "flat32_bytes": 9603292,
+      "full_bitmap_bytes": 156477090
+    },
+    {
+      "namespace": "country",
+      "postings": 38,
+      "total_cardinality": 541909,
+      "blocks": 233,
+      "key_bytes": 466,
+      "payload_bytes": 166590,
+      "metadata_bytes": 13494,
+      "allocated_bytes": 223898,
+      "flat32_bytes": 2167636,
+      "full_bitmap_bytes": 2574082
+    }
+  ],
+  "cardinality_groups": [
+    {
+      "namespace": "country",
+      "cardinality_group": "1-16",
+      "postings": 1,
+      "key_bytes": 2,
+      "payload_bytes": 20,
+      "metadata_bytes": 78,
+      "allocated_bytes": 112,
+      "flat32_bytes": 40,
+      "full_bitmap_bytes": 67739
+    },
+    {
+      "namespace": "country",
+      "cardinality_group": "17-256",
+      "postings": 13,
+      "key_bytes": 78,
+      "payload_bytes": 2366,
+      "metadata_bytes": 2418,
+      "allocated_bytes": 6084,
+      "flat32_bytes": 4732,
+      "full_bitmap_bytes": 880607
+    },
+    {
+      "namespace": "country",
+      "cardinality_group": "257-4096",
+      "postings": 20,
+      "key_bytes": 314,
+      "payload_bytes": 37980,
+      "metadata_bytes": 8958,
+      "allocated_bytes": 68102,
+      "flat32_bytes": 75960,
+      "full_bitmap_bytes": 1354780
+    },
+    {
+      "namespace": "country",
+      "cardinality_group": ">4096",
+      "postings": 4,
+      "key_bytes": 72,
+      "payload_bytes": 126224,
+      "metadata_bytes": 2040,
+      "allocated_bytes": 149600,
+      "flat32_bytes": 2086904,
+      "full_bitmap_bytes": 270956
+    },
+    {
+      "namespace": "term",
+      "cardinality_group": "1-16",
+      "postings": 465,
+      "key_bytes": 2422,
+      "payload_bytes": 4938,
+      "metadata_bytes": 76554,
+      "allocated_bytes": 98300,
+      "flat32_bytes": 9876,
+      "full_bitmap_bytes": 31498635
+    },
+    {
+      "namespace": "term",
+      "cardinality_group": "17-256",
+      "postings": 909,
+      "key_bytes": 13796,
+      "payload_bytes": 200098,
+      "metadata_bytes": 394308,
+      "allocated_bytes": 897578,
+      "flat32_bytes": 400196,
+      "full_bitmap_bytes": 61574751
+    },
+    {
+      "namespace": "term",
+      "cardinality_group": "257-4096",
+      "postings": 805,
+      "key_bytes": 14126,
+      "payload_bytes": 1690022,
+      "metadata_bytes": 400722,
+      "allocated_bytes": 3123268,
+      "flat32_bytes": 3380044,
+      "full_bitmap_bytes": 54529895
+    },
+    {
+      "namespace": "term",
+      "cardinality_group": ">4096",
+      "postings": 131,
+      "key_bytes": 2350,
+      "payload_bytes": 2718000,
+      "metadata_bytes": 66594,
+      "allocated_bytes": 3827912,
+      "flat32_bytes": 5813176,
+      "full_bitmap_bytes": 8873809
+    }
+  ],
+  "density_groups": [
+    {
+      "namespace": "country",
+      "density_group": "<=1%",
+      "blocks": 201,
+      "cardinality": 21362,
+      "payload_bytes": 42724
+    },
+    {
+      "namespace": "country",
+      "density_group": ">1%-6.25%",
+      "blocks": 23,
+      "cardinality": 25069,
+      "payload_bytes": 50138
+    },
+    {
+      "namespace": "country",
+      "density_group": ">25%",
+      "blocks": 9,
+      "cardinality": 495478,
+      "payload_bytes": 73728
+    },
+    {
+      "namespace": "term",
+      "density_group": "<=1%",
+      "blocks": 15558,
+      "cardinality": 1100388,
+      "payload_bytes": 2200776
+    },
+    {
+      "namespace": "term",
+      "density_group": ">1%-6.25%",
+      "blocks": 733,
+      "cardinality": 976765,
+      "payload_bytes": 1953530
+    },
+    {
+      "namespace": "term",
+      "density_group": ">6.25%-25%",
+      "blocks": 56,
+      "cardinality": 323670,
+      "payload_bytes": 458752
+    }
+  ],
+  "excluded_empty_groups": "groups with no real samples are absent, not synthesized",
+  "memory_limitations": "posting capacities exclude allocator; dictionary reported separately; not RSS",
+  "p95_definition": "nearest rank ceil(0.95*n), descriptive for small samples"
+}

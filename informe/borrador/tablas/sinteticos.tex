@@ -1,0 +1,15 @@
+\begin{tabular}{llrrrrr}
+\toprule
+Caso & Operacion & IDs & A & B & Payload (B) & Mediana ($\mu$s) \\
+\midrule
+AA & and & 1\,000 & 1 & 0 & 2\,000 & 2.399 \\
+AA & or & 5\,000 & 0 & 1 & 8\,192 & 13.779 \\
+BB vacio & and & 0 & 0 & 0 & 0 & 2.623 \\
+BB a array & and & 1\,000 & 1 & 0 & 2\,000 & 3.731 \\
+8192 bloques & build & 8\,192 & 8192 & 0 & 16\,384 & 48258.960 \\
+bloque 4096 & build & 4\,096 & 1 & 0 & 8\,192 & 282.052 \\
+bloque 4097 & build & 4\,097 & 0 & 1 & 8\,192 & 284.974 \\
+bloque 8192 & build & 8\,192 & 0 & 1 & 8\,192 & 303.267 \\
+4096 a 4097 & insert & 4\,097 & 0 & 1 & 8\,192 & 4.779 \\
+\bottomrule
+\end{tabular}

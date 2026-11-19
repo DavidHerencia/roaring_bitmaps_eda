@@ -1,0 +1,27 @@
+{
+  "dataset": "Online Retail",
+  "citation": "Chen, D. (2015). Online Retail. UCI Machine Learning Repository. https://doi.org/10.24432/C5BW33",
+  "license": "CC BY 4.0",
+  "source_page": "https://archive.ics.uci.edu/dataset/352/online-retail",
+  "source_url": "https://archive.ics.uci.edu/static/public/352/online%2Bretail.zip",
+  "prepared_at_utc": "2026-11-18T14:20:35.773868+00:00",
+  "xlsx_file": "Online Retail.xlsx",
+  "xlsx_sha256": "43465a06f2ccf7c8b5bd2892bc7defb52f97487934fe93b16ae4c3936424676d",
+  "xlsx_sha256_verified": true,
+  "csv_file": "online_retail.csv",
+  "csv_sha256": "bdef3e7677bc08ee2567aa7eebe2bded0417427bab7ee7769dddb5ea2ebdc18e",
+  "row_count": 541909,
+  "row_id_min": 0,
+  "row_id_max": 541908,
+  "missing_description_rows": 1454,
+  "cancellation_rows": 9288,
+  "columns": [
+    "row_id",
+    "invoice_no",
+    "description",
+    "country"
+  ],
+  "filters": "none; preserve every worksheet data row in original order",
+  "archive_sha256": "f5385cbb54bbebf7196389109c6b0621faab0c304e3702548165e71c84aede8b",
+  "archive_cached_at_utc": "2026-11-18T14:19:11.756030+00:00"
+}

@@ -1,0 +1,14 @@
+pdfTeX 3.141592653-2.6-1.40.29 (TeX Live 2026/Arch Linux)
+kpathsea version 6.4.2
+
+Comando (desde informe/):
+pdflatex -interaction=nonstopmode -halt-on-error -output-directory=../build/informe_final_1 informe_final_1.tex
+Pasadas: 2; salida copiada a informe/informe_final_1.pdf
+
+Extracto final:
+Package babel Warning: No hyphenation patterns were preloaded for
+(babel)                the language 'Spanish' into the format.
+(babel)                Please, configure your TeX system to add them and
+(babel)                rebuild the format. Now I will use the patterns
+(babel)                preloaded for \language=0 instead on input line 51.
+Output written on ../build/informe_final_1/informe_final_1.pdf (11 pages, 26159

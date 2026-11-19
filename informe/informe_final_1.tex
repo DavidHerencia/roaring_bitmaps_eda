@@ -1,0 +1,372 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[spanish,es-nodecimaldot]{babel}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{microtype}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{amsmath}
+\usepackage{upquote}
+\usepackage{xcolor}
+\usepackage{pgfplots}
+\usepackage[hidelinks]{hyperref}
+\pgfplotsset{compat=1.18}
+\geometry{top=2.3cm,bottom=2.5cm,left=2.5cm,right=2.5cm}
+\setlength{\parskip}{0.35em}
+\setlength{\parindent}{0pt}
+\newcommand{\ruta}[1]{\path{#1}}
+\definecolor{serieroaring}{HTML}{2A78D6}
+\definecolor{seriescan}{HTML}{EB6834}
+\definecolor{seriegris}{HTML}{9A9A94}
+\begin{document}
+\begin{titlepage}
+\centering
+\includegraphics[width=3.5cm]{logo_utec.png/images.png}\par
+\vspace{1cm}
+Universidad de Ingeniería y Tecnología\\
+CS3014 Estructuras de Datos Avanzadas\par
+\vspace{1.8cm}
+{\LARGE\bfseries Roaring Bitmaps para un índice invertido de registros de ventas: implementación y evaluación\par}
+\vspace{1cm}
+{\large Informe final\par}
+\vspace{1.5cm}
+\textbf{Integrantes}\\[0.3cm]
+David Herencia Galván\\
+Sofía Herrera Salazar\par
+\vfill
+\end{titlepage}
+
+\begin{abstract}
+Se implementó en C++17 una versión propia de Roaring Bitmaps para conjuntos de enteros de 32 bits y se aplicó como índice invertido sobre las 541\,909 filas del conjunto Online Retail. La estructura divide cada entero en una parte alta de 16 bits, que selecciona un contenedor, y una parte baja de 16 bits, que se guarda en un arreglo ordenado (hasta 4096 valores) o en un bitmap de 8192 bytes (más de 4096 valores). Sobre esta representación se implementaron inserción, pertenencia, intersección (AND) y unión (OR), con un algoritmo específico para cada par de tipos de contenedor. El índice contiene 2310 términos y 38 países; sus postings ocupan 5,76 MB en el modelo de espacio usado, el 49\% de lo que ocuparía guardar los IDs como enteros de 32 bits, aunque las listas muy pequeñas (1--16 IDs) pagan hasta 8,5 veces más por metadatos. Las doce consultas evaluadas fueron entre 5 y más de 10\,000 veces más rápidas que recorrer todas las filas, y su coste quedó dominado por el tamaño del resultado.
+\end{abstract}
+\tableofcontents
+\newpage
+
+\section{Problema, pregunta y objetivos}
+Buscar repetidamente filas comerciales por palabras de su descripción o por país requiere evaluar predicados sobre muchos registros. Un índice invertido guarda, para cada clave, el conjunto de IDs de las filas que la contienen; así, una consulta AND se resuelve como intersección de conjuntos y una OR como unión. El problema estructural es que las frecuencias son muy heterogéneas: un bitmap completo por clave desperdicia espacio en listas escasas, mientras que un arreglo de IDs no aprovecha las zonas densas.
+
+La pregunta del proyecto es cómo varían el espacio y el tiempo de combinar filtros cuando cambian la cardinalidad de las listas y la densidad dentro de cada bloque de IDs. El objetivo general fue estudiar e implementar el mecanismo de Roaring y evaluarlo en un caso real reproducible. Los objetivos específicos fueron: construir el núcleo y el índice; comprobar los resultados contra un recorrido independiente; medir construcción, espacio y consultas por separado; y explicar ventajas y sobrecostos según cardinalidad y densidad.
+
+El alcance comprende IDs de 32 bits, contenedores array y bitmap, inserción, pertenencia, AND/OR entre todos los pares de contenedores y normalización de resultados. Quedan fuera los run containers, SIMD, concurrencia, eliminación, rank/select y persistencia en disco.
+
+\section{Fundamento y trabajo relacionado}
+Los bitmaps clásicos representan un conjunto $S\subseteq\{0,\ldots,N-1\}$ con $N$ bits: las operaciones de conjuntos se vuelven operaciones lógicas palabra a palabra, muy rápidas, pero el espacio es $N/8$ bytes sin importar cuántos elementos tenga $S$. Los esquemas comprimidos por corridas (WAH, Concise) reducen el espacio, pero pierden el acceso aleatorio y obligan a descomprimir secuencialmente. Roaring~\cite{chambi2016} propone una partición en dos niveles: divide el universo de 32 bits en $2^{16}$ bloques de $2^{16}$ valores y, en cada bloque, elige la representación más compacta según cuántos valores contiene. Esto conserva acceso aleatorio, operaciones rápidas en zonas densas y espacio proporcional a la cardinalidad en zonas escasas.
+
+El artículo original incluye además búsquedas adaptativas (galloping) para intersecciones muy desbalanceadas; la biblioteca CRoaring~\cite{lemire2018} añade run containers e instrucciones SIMD. Este proyecto implementa el núcleo sin esas optimizaciones. Como motivación de aplicación, ClickHouse usa Roaring en su índice de texto completo para listas de más de 12 IDs y otra representación para listas menores~\cite{clickhouse2026}, lo que coincide con el sobrecosto de listas pequeñas que observamos en la sección~\ref{sec:espacio}.
+
+\section{El algoritmo Roaring}\label{sec:algoritmo}
+\subsection{Descomposición de los enteros}
+Cada entero $x$ de 32 bits se divide en dos mitades de 16 bits:
+\[
+h(x) = x \gg 16, \qquad l(x) = x \;\&\; \texttt{0xFFFF}.
+\]
+La parte alta $h$ identifica el \emph{bloque} (o contenedor) al que pertenece $x$; la parte baja $l$ es la posición dentro del bloque. Todos los enteros con la misma parte alta comparten un contenedor, y cada contenedor solo necesita almacenar valores de 16 bits. El bitmap Roaring es, por tanto, un vector de pares $(h, C_h)$ ordenado por $h$, donde $C_h$ guarda el conjunto $\{l(x) : x\in S,\ h(x)=h\}$. Los bloques vacíos no se almacenan.
+
+\textbf{Ejemplo.} Para $S=\{3,\ 70\,000,\ 70\,001,\ 131\,077\}$:
+\begin{center}\small
+\begin{tabular}{rccc}
+\toprule
+$x$ & $h(x)$ & $l(x)$ & contenedor \\
+\midrule
+3 & 0 & 3 & $C_0=[3]$ \\
+70\,000 & 1 & 4464 & \multirow{2}{*}{$C_1=[4464,4465]$} \\
+70\,001 & 1 & 4465 & \\
+131\,077 & 2 & 5 & $C_2=[5]$ \\
+\bottomrule
+\end{tabular}
+\end{center}
+El conjunto queda como tres contenedores array con claves $0,1,2$. Para reconstruir un ID basta $x = (h \ll 16)\;|\;l$.
+
+\subsection{Dos tipos de contenedor y el umbral 4096}
+\begin{itemize}
+\item \textbf{Array}: vector ordenado de valores de 16 bits. Ocupa $2c$ bytes para $c$ valores. La búsqueda es binaria.
+\item \textbf{Bitmap}: 1024 palabras de 64 bits ($2^{16}$ bits, 8192 bytes). El valor $l$ está presente si el bit $l \bmod 64$ de la palabra $\lfloor l/64\rfloor$ vale 1.
+\end{itemize}
+El umbral sale de igualar ambos costes: $2c = 8192 \Rightarrow c = 4096$. Con hasta 4096 valores el array es igual o más pequeño; por encima, el bitmap tiene tamaño fijo y se vuelve más compacto. La implementación respeta esta invariante en todo momento: un contenedor con $c\le4096$ es array y uno con $c>4096$ es bitmap. Cada contenedor guarda además su cardinalidad $c$, de modo que la cardinalidad total del conjunto es la suma de los contadores sin recorrer los datos.
+
+\subsection{Inserción y pertenencia}
+La inserción localiza el contenedor por búsqueda binaria sobre las claves altas; si no existe, crea un array vacío en la posición ordenada. Dentro de un array, se busca la posición con \texttt{lower\_bound} y se inserta si el valor no estaba; si el contador supera 4096, el array se convierte en bitmap encendiendo el bit de cada uno de sus valores. Dentro de un bitmap, se enciende el bit con una máscara y se incrementa el contador solo si estaba apagado. Los duplicados se ignoran en ambos casos.
+
+La pertenencia (\texttt{contains}) sigue los mismos dos pasos: búsqueda binaria de $h$ entre los $b$ contenedores y luego búsqueda binaria de $l$ en el array o lectura directa del bit en el bitmap.
+
+\subsection{Intersección (AND)}
+Las operaciones binarias trabajan en dos niveles. En el primer nivel se recorren los dos vectores de claves ordenadas como en la mezcla de \emph{merge sort}: si las claves difieren se avanza la menor, y si coinciden se combinan los dos contenedores. Para la intersección, una clave presente en un solo operando se descarta, y un contenedor que resulta vacío no se agrega al resultado.
+
+En el segundo nivel, la combinación de dos contenedores usa un método distinto según sus tipos:
+\begin{itemize}
+\item \textbf{Array AND array}: intersección de dos secuencias ordenadas (\texttt{std::set\_intersection}), lineal en la suma de longitudes. El resultado tiene a lo sumo $\min(c_1,c_2)\le4096$ valores, por lo que siempre es array.
+\item \textbf{Array AND bitmap}: se recorre el array y se conserva cada valor cuyo bit esté encendido en el bitmap; cada prueba es $O(1)$. El resultado no puede superar el tamaño del array, así que también es array.
+\item \textbf{Bitmap AND bitmap}: se hace AND de las 1024 palabras y se cuentan los bits del resultado. Si la cardinalidad queda en 4096 o menos, el contenedor se \emph{normaliza} a array extrayendo las posiciones de los bits encendidos.
+\end{itemize}
+
+\subsection{Unión (OR)}
+La unión recorre las claves de la misma forma, pero copia al resultado los contenedores cuya clave aparece en un solo operando. Para claves comunes:
+\begin{itemize}
+\item \textbf{Array OR array}: unión de secuencias ordenadas (\texttt{std::set\_union}). Si el resultado supera 4096 valores se convierte a bitmap.
+\item \textbf{Array OR bitmap}: se copia el bitmap y se enciende el bit de cada valor del array. El resultado es bitmap porque su cardinalidad es al menos la del bitmap ($>4096$).
+\item \textbf{Bitmap OR bitmap}: OR de las 1024 palabras y conteo de bits; el resultado siempre es bitmap.
+\end{itemize}
+Ningún operando se modifica: AND y OR devuelven un bitmap nuevo. Gracias a la normalización, el resultado de cualquier operación cumple la misma invariante de representación que los conjuntos construidos por inserción, por lo que puede volver a combinarse sin casos especiales.
+
+\subsection{Enumeración y conteo de bits}
+Para devolver los IDs de una consulta (\texttt{to\_vector}) se recorren los contenedores en orden de clave. Un array se copia directamente; en un bitmap, para cada palabra $w\neq0$ se obtiene la posición del bit menos significativo (conteo de ceros finales), se emite $64i+\text{pos}$ y se apaga ese bit con $w \gets w \;\&\; (w-1)$. El mismo truco ($w\;\&\;(w-1)$ elimina el último 1) se usa para contar bits en AND/OR, de modo que el trabajo es proporcional a los bits encendidos. Como las claves y los valores bajos están ordenados, la salida queda ordenada sin un paso adicional.
+
+\subsection{Complejidad}
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{ll}
+\toprule
+Operación & Coste \\
+\midrule
+Pertenencia (array / bitmap) & $O(\log b + \log c)$ / $O(\log b + 1)$ \\
+AND/OR array--array & $O(c_1+c_2)$ \\
+AND/OR bitmap--bitmap & $O(1024)$ palabras, sin importar $c$ \\
+\bottomrule
+\end{tabular}
+\caption{Costes de las operaciones principales; $c$ es la cardinalidad de un contenedor y $b$ el número de contenedores.}\label{tab:complejidad}
+\end{table}
+
+La consecuencia práctica es que el coste de una operación depende de \emph{cuántos bloques} toca y de \emph{cómo está distribuido} cada bloque, no solo del número total de elementos.
+
+\section{Implementación y aplicación}
+\subsection{Núcleo}
+La clase \texttt{roaring\_bitmap} (\ruta{include/roaring_bitmap.hpp}, \ruta{src/roaring_bitmap.cpp}) guarda un \texttt{std::vector} de contenedores ordenado por clave. Cada contenedor tiene su clave de 16 bits, su cardinalidad y dos vectores: \texttt{values} (array de \texttt{uint16\_t}) y \texttt{words} (1024 \texttt{uint64\_t}); exactamente uno de ellos está en uso y el tipo se deduce de si \texttt{words} está vacío. La interfaz pública es:
+\begin{itemize}
+\item \texttt{add(x)} y \texttt{contains(x)}: inserción y pertenencia.
+\item \texttt{intersection(o)} y \texttt{union\_with(o)}: AND/OR, devuelven un bitmap nuevo.
+\item \texttt{cardinality()}: suma de los contadores de cada contenedor.
+\item \texttt{to\_vector()}: enumeración ordenada de los IDs.
+\item \texttt{statistics()} y \texttt{memory\_usage()}: tipo, cardinalidad y bytes por contenedor, usados en la evaluación de espacio.
+\end{itemize}
+Se implementó desde cero, sin usar código de CRoaring ni de otras bibliotecas; los artículos citados son la base conceptual.
+
+\subsection{Índice invertido}
+\ruta{src/retail_index.cpp} lee el CSV, normaliza cada fila y construye dos mapas: término $\to$ bitmap y país $\to$ bitmap. El ID de cada fila es su posición en el archivo ($0,\ldots,541908$), por lo que IDs consecutivos caen en el mismo bloque de 65\,536 filas: el universo ocupa solo 9 bloques. Las consultas se traducen directamente a operaciones del núcleo:
+\begin{center}\small
+\begin{tabular}{ll}
+\toprule
+Consulta & Operación \\
+\midrule
+término $t$ & posting$(t)$ \\
+país $p$ & posting$(p)$ \\
+$t$ AND $p$ & posting$(t)$\texttt{.intersection}(posting$(p)$) \\
+$t_1$ OR $t_2$ & posting$(t_1)$\texttt{.union\_with}(posting$(t_2)$) \\
+\bottomrule
+\end{tabular}
+\end{center}
+Una clave ausente devuelve un conjunto vacío. Como referencia de corrección se implementó \texttt{scan\_rows}, que evalúa el mismo predicado recorriendo todas las filas normalizadas sin usar el índice. La CLI \ruta{apps/retail_cli.cpp} ejecuta una consulta, muestra las filas originales y, con \verb|--verify|, compara todos los IDs con el scan.
+
+\subsection{Pruebas de corrección}
+Las pruebas del núcleo comparan cada operación contra \texttt{std::set} y operaciones ordenadas estándar en conjuntos vacíos, duplicados, extremos de 32 bits, fronteras entre bloques, el paso 4096$\to$4097 y los tres pares de contenedores en AND y OR. En la evaluación, cada consulta compara el vector completo de IDs de Roaring con el del scan antes y después de medir; las doce coincidieron.
+
+\section{Datos y normalización}
+Online Retail~\cite{uci2015} contiene transacciones de un comercio británico entre diciembre de 2010 y diciembre de 2011. Se conservaron todas las filas en su orden original, incluidas cancelaciones y descripciones vacías. Los términos son tokens \texttt{[a-z0-9]+} en minúsculas, sin repetición dentro de una fila; los países se pasan a minúsculas con espacios normalizados. No se aplicó stemming ni eliminación de stopwords.
+
+El índice resultante tiene 2310 términos, 38 países y 2\,942\,732 pares fila--clave. Los 2348 postings ocupan 16\,580 contenedores (16\,347 de términos y 233 de países).
+
+\section{Metodología experimental}
+Se compiló en modo Release (\texttt{-O3}) y se midió con \texttt{std::chrono::steady\_clock}. La construcción del índice se midió tres veces, aparte de la lectura del CSV y la normalización. Se eligieron doce consultas fijas que cubren casos extremos: términos de frecuencia mínima, mediana y máxima (\texttt{100}: 1 fila, \texttt{peace}: 171, \texttt{set}: 63\,431), el país menos y más frecuente (Saudi Arabia: 10, United Kingdom: 495\,478), tres AND con UK, tres OR entre términos y un término ausente. Cada consulta se midió 15 veces con Roaring y 15 con scan, alternando el orden, y se reporta la mediana. El tiempo de Roaring incluye la materialización del vector de IDs.
+
+El espacio se calcula con un modelo explícito: \emph{payload} ($2c$ bytes por array, 8192 por bitmap), más 2 bytes de clave por contenedor y los metadatos de los objetos (\texttt{sizeof}). Se compara con dos referencias ideales: guardar los IDs como enteros de 32 bits ($4|S|$ bytes) y un bitmap completo por lista ($\lceil541909/8\rceil=67\,739$ bytes). Además se ejecutaron controles sintéticos con semilla fija para aislar el umbral, la dispersión entre bloques y cada par de contenedores.
+
+\section{Resultados}
+\subsection{Construcción}
+La construcción del índice completo tardó 437 ms (mediana de tres ejecuciones), un coste que se paga una sola vez y que luego se amortiza entre todas las consultas.
+
+\subsection{Espacio}\label{sec:espacio}
+\begin{table}[htbp]
+\centering\small
+\input{borrador/tablas/espacio.tex}
+\caption{Bytes de los postings por tipo de clave. Usado = payload + claves + metadatos; Capacidad incluye las reservas de los vectores.}\label{tab:espacio}
+\end{table}
+
+En total los postings usan 5\,764\,480 bytes, el \textbf{49\%} de los 11\,770\,928 bytes que ocuparían como enteros de 32 bits, y 28 veces menos que un bitmap completo por lista (159 MB). El ahorro viene de dos efectos del algoritmo: cada ID se guarda con 16 bits en lugar de 32 dentro de los arrays, y los bloques densos (por ejemplo, UK) pasan a bitmaps de tamaño fijo.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[ybar,bar width=12pt,width=0.9\textwidth,height=6cm,ymin=0,ymax=11.5,enlarge x limits=0.15,
+ylabel={Bytes Roaring / bytes IDs32},xlabel={Cardinalidad del posting},
+symbolic x coords={a,b,c,d},xtick=data,
+xticklabels={1--16,17--256,257--4096,$>4096$},
+nodes near coords,nodes near coords style={font=\scriptsize,/pgf/number format/fixed,/pgf/number format/precision=2},
+legend style={at={(0.98,0.97)},anchor=north east,font=\small},
+ymajorgrids,grid style={gray!20},axis lines*=left,
+extra y ticks={1},extra y tick style={grid=major,major grid style={black,dashed}}]
+\addplot[fill=serieroaring,draw=none] coordinates {(a,8.496759822) (b,1.519760317) (c,0.622734497) (d,0.479418480)};
+\addplot[fill=serieroaring!35,draw=none] coordinates {(a,9.953422438) (b,2.242846005) (c,0.924031758) (d,0.658488922)};
+\legend{Usado,Capacidad}
+\end{axis}
+\end{tikzpicture}
+\caption{Espacio de los postings de términos relativo a guardar los IDs como enteros de 32 bits, por grupo de cardinalidad. La línea punteada marca la igualdad: por debajo, Roaring ahorra; por encima, cuesta más.}\label{fig:espacio}
+\end{figure}
+
+\begin{table}[htbp]
+\centering\small
+\input{borrador/tablas/grupos.tex}
+\caption{Postings de términos agrupados por cardinalidad.}\label{tab:grupos}
+\end{table}
+
+Ese ahorro agregado esconde un sobrecosto en listas pequeñas (figura~\ref{fig:espacio}, tabla~\ref{tab:grupos}). Las 465 listas de 1--16 IDs ocupan 8,5 veces más que sus IDs de 32 bits: con tan pocos elementos, el payload es mínimo y dominan la clave y los metadatos del contenedor (dos vectores y un contador). El grupo 17--256 también cuesta más. A partir de 257 IDs Roaring ahorra, y el ahorro crece con la cardinalidad.
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[ybar,bar width=12pt,width=0.85\textwidth,height=6cm,ymode=log,ymin=1,ymax=60000,
+log origin=infty,
+ylabel={Contenedores (escala log)},xlabel={Densidad del bloque ($c/65536$)},
+symbolic x coords={a,b,c,d},xtick={a,b,c,d},
+xticklabels={$\le1\%$,1--6{,}25\%,6{,}25--25\%,$>25\%$},
+point meta=rawy,nodes near coords,nodes near coords style={font=\scriptsize},
+enlarge x limits=0.18,
+legend style={at={(0.98,0.97)},anchor=north east,font=\small},
+ymajorgrids,grid style={gray!20},axis lines*=left]
+\addplot[fill=serieroaring,draw=none] coordinates {(a,15558) (b,733) (c,56)};
+\addplot[fill=seriescan,draw=none] coordinates {(a,201) (b,23) (d,9)};
+\legend{Términos,Países}
+\end{axis}
+\end{tikzpicture}
+\caption{Distribución de los contenedores según su densidad. Solo los bloques con más de 4096 valores ($>6{,}25\%$) son bitmaps: 56 de términos y 9 de países.}\label{fig:densidad}
+\end{figure}
+
+La figura~\ref{fig:densidad} muestra por qué casi todo el índice está formado por arrays: el 95\% de los bloques de términos tiene como máximo un 1\% de densidad. Solo 65 de los 16\,580 contenedores son bitmaps, pero concentran gran parte de los IDs: los 9 bitmaps de UK guardan 495\,478 IDs en 73\,728 bytes (1,2 bits por ID). Es la densidad local del bloque, y no el tamaño total de la lista, lo que determina la representación.
+
+\subsection{Consultas}
+\begin{table}[htbp]
+\centering\small
+\begin{tabular}{lrrrr}
+\toprule
+Consulta & IDs & Scan (ms) & Roaring (ms) & Veces más rápido \\
+\midrule
+100 & 1 & 16.527 & 0.0029 & 5\,791 \\
+peace & 171 & 20.615 & 0.0012 & 16\,843 \\
+set & 63\,431 & 21.745 & 0.1974 & 110 \\
+Saudi Arabia & 10 & 2.937 & 0.0003 & 10\,839 \\
+United Kingdom & 495\,478 & 4.390 & 0.8721 & 5 \\
+100 AND UK & 1 & 17.769 & 0.0007 & 26\,601 \\
+peace AND UK & 155 & 20.744 & 0.0091 & 2\,291 \\
+set AND UK & 56\,118 & 18.422 & 0.2371 & 78 \\
+100 OR peace & 172 & 27.176 & 0.0073 & 3\,725 \\
+100 OR set & 63\,432 & 26.983 & 0.1796 & 150 \\
+peace OR set & 63\,602 & 29.089 & 0.1844 & 158 \\
+ausente & 0 & 11.937 & 0.0002 & 48\,134 \\
+\bottomrule
+\end{tabular}
+\caption{Tiempo mediano de 15 repeticiones por consulta. UK = United Kingdom. ``Veces más rápido'' = tiempo del scan dividido entre tiempo de Roaring.}\label{tab:latencias}
+\end{table}
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[xbar,bar width=4pt,width=0.82\textwidth,height=10cm,
+xmode=log,xmin=0.0001,xmax=100,log origin=infty,
+xlabel={Mediana (ms, escala log)},
+symbolic y coords={ausente,peace OR set,100 OR set,100 OR peace,set AND UK,peace AND UK,100 AND UK,United Kingdom,Saudi Arabia,set,peace,100},
+ytick=data,yticklabel style={font=\small},
+enlarge y limits=0.05,
+legend style={at={(0.5,1.02)},anchor=south,legend columns=2,font=\small},
+xmajorgrids,grid style={gray!20},axis lines*=left]
+\addplot[fill=seriescan,draw=none] coordinates {(16.526909,100) (20.615261,peace) (21.744897,set) (2.937224,Saudi Arabia) (4.389661,United Kingdom) (17.769275,100 AND UK) (20.744259,peace AND UK) (18.422302,set AND UK) (27.176090,100 OR peace) (26.983176,100 OR set) (29.088881,peace OR set) (11.937236,ausente)};
+\addplot[fill=serieroaring,draw=none] coordinates {(0.002854,100) (0.001224,peace) (0.197382,set) (0.000271,Saudi Arabia) (0.872068,United Kingdom) (0.000668,100 AND UK) (0.009054,peace AND UK) (0.237067,set AND UK) (0.007296,100 OR peace) (0.179648,100 OR set) (0.184386,peace OR set) (0.000248,ausente)};
+\legend{Scan,Roaring}
+\end{axis}
+\end{tikzpicture}
+\caption{Latencia mediana de cada consulta con el índice Roaring y con el recorrido completo de filas (scan). El eje es logarítmico: cada división es un factor 10.}\label{fig:latencias}
+\end{figure}
+
+Las doce consultas fueron más rápidas con el índice (figura~\ref{fig:latencias}). El scan cuesta siempre entre 3 y 29 ms porque recorre las 541\,909 filas sin importar el resultado. Roaring, en cambio, solo toca los contenedores de las claves involucradas, y su tiempo va de 0,25 $\mu$s (término ausente) a 0,87 ms (UK).
+
+\begin{figure}[htbp]
+\centering
+\begin{tikzpicture}
+\begin{axis}[width=0.8\textwidth,height=6.5cm,xmode=log,ymode=log,
+xmin=0.5,xmax=1e6,ymin=1,ymax=1e5,
+xlabel={Filas devueltas por la consulta (escala log)},ylabel={Veces más rápido que el scan},
+xmajorgrids,ymajorgrids,grid style={gray!20},axis lines*=left]
+\addplot[only marks,mark=*,mark size=3pt,color=serieroaring,
+nodes near coords,point meta=explicit symbolic,
+nodes near coords style={font=\scriptsize,color=black,anchor=west,xshift=2pt}]
+coordinates {(1,5790.8)[100] (171,16842.5)[peace] (63431,110.2)[] (10,10838.5)[Saudi Arabia] (495478,5.0)[UK] (1,26600.7)[100 AND UK] (155,2291.2)[] (56118,77.7)[] (172,3724.8)[] (63432,150.2)[] (63602,157.8)[set, set AND UK, OR con set]};
+\end{axis}
+\end{tikzpicture}
+\caption{Cada punto es una consulta. Cuanto más a la derecha, más filas devuelve; cuanto más arriba, mayor es la ventaja de Roaring sobre el scan.}\label{fig:aceleracion}
+\end{figure}
+
+La figura~\ref{fig:aceleracion} responde a una pregunta sencilla: \emph{¿de qué depende cuánto gana el índice?} Cada punto es una de las consultas; en el eje horizontal está cuántas filas devuelve y en el vertical cuántas veces más rápida fue con Roaring que con el scan. Los puntos bajan de izquierda a derecha: las consultas que devuelven pocas filas (\texttt{100}, \texttt{peace}, Saudi Arabia) son miles de veces más rápidas, las que devuelven decenas de miles (\texttt{set} y sus combinaciones) son unas 100 veces más rápidas, y UK, que devuelve casi todas las filas, solo 5 veces.
+
+La razón es que el scan siempre hace el mismo trabajo (revisar las 541\,909 filas), mientras que Roaring hace un trabajo proporcional a lo que devuelve: con pocas filas solo toca uno o dos contenedores pequeños, pero con muchas tiene que recorrer los contenedores y copiar cada ID al vector de salida. Por eso la conclusión principal sobre tiempo es que \textbf{el coste de Roaring depende sobre todo del tamaño del resultado}, no de la operación. Por ejemplo, \texttt{set AND UK} (56\,118 filas) tarda 0,24 ms, casi lo mismo que devolver solo \texttt{set} (0,20 ms): la intersección en sí es barata. Los tiempos por debajo de 1 $\mu$s están cerca de la resolución del reloj, así que las ventajas más extremas deben leerse como órdenes de magnitud, no como valores exactos.
+
+\subsection{Controles sintéticos}
+\begin{table}[htbp]
+\centering\scriptsize
+\input{borrador/tablas/sinteticos.tex}
+\caption{Selección de escenarios sintéticos; A/B = contenedores array/bitmap del resultado. Aquí el tiempo no incluye la materialización de IDs.}\label{tab:sinteticos}
+\end{table}
+
+Los sintéticos (tabla~\ref{tab:sinteticos}) confirman el comportamiento descrito en la sección~\ref{sec:algoritmo}:
+\begin{itemize}
+\item \textbf{Umbral.} Un bloque con 4096 valores (array) y otro con 4097 (bitmap) ocupan ambos 8192 bytes: el umbral cambia la representación sin un salto de espacio. La inserción que provoca la conversión cuesta 4,8 $\mu$s, un coste puntual.
+\item \textbf{Normalización.} La unión de dos arrays puede producir un bitmap (5000 IDs) y la intersección de dos bitmaps puede volver a array (1000 IDs) o quedar vacía, en cuyo caso el contenedor se elimina.
+\item \textbf{Bitmap--bitmap.} AND y OR entre bitmaps tardan 3--4 $\mu$s independientemente de la cardinalidad, porque siempre recorren 1024 palabras.
+\item \textbf{Distribución.} Los mismos 8192 IDs concentrados en un bloque se construyen en 0,30 ms y ocupan 8192 bytes; dispersos en 8192 bloques (uno por bloque) ocupan el doble de payload, crean 8192 contenedores y tardan 48 ms, unas 160 veces más. El coste adicional proviene de crear un contenedor por ID y de insertar cada clave nueva en su posición ordenada dentro del vector de contenedores.
+\end{itemize}
+
+\subsection{Recuperación de filas}
+La consulta \texttt{heart AND United Kingdom} con la CLI devuelve 37\,513 IDs idénticos a los del scan:
+\begin{verbatim}
+./build/release/retail_cli \
+  --data data/prepared/online_retail.csv \
+  --type and --first heart --second 'United Kingdom' \
+  --limit 5 --verify
+\end{verbatim}
+Los primeros IDs son 0, 4, 19, 49 y 62; por ejemplo, la fila 0 corresponde a la factura 536365, \texttt{WHITE HANGING HEART T-LIGHT HOLDER}.
+
+\section{Discusión y límites}
+\textbf{Qué muestra la evidencia.} La combinación array/bitmap explica tanto el ahorro agregado de espacio como el sobrecosto de las listas pequeñas, donde los metadatos dominan. Las operaciones entre contenedores se comportan según su análisis: bitmap--bitmap tiene coste constante, array--array es lineal y la normalización mantiene la invariante en los resultados. Con el índice construido, los filtros repetidos son mucho más rápidos que recorrer las filas, y el coste restante depende sobre todo de cuántos IDs se devuelven.
+
+\textbf{Qué no muestra.} El scan no es un índice alternativo, así que el experimento separa el beneficio de \emph{tener} un índice, no el de elegir Roaring frente a listas ordenadas o bitmaps completos; esas alternativas solo se comparan en espacio. Doce consultas en un solo dataset y un solo equipo no representan una carga real, y el modelo de memoria no incluye el allocator ni el diccionario de claves.
+
+\section{Mejoras futuras}
+Ninguna de estas mejoras está implementada:
+\begin{itemize}
+\item \textbf{Comparar representaciones con el mismo contrato}: listas ordenadas de IDs32 y bitmaps completos, midiendo tiempo de consulta, para aislar el efecto de Roaring frente al de indexar.
+\item \textbf{Construcción en lote}: como los IDs llegan en orden creciente, se puede agregar al final del contenedor en vez de insertar con desplazamiento y reservar el tamaño final; la diferencia entre capacidad y espacio usado es de 2,4 MB.
+\item \textbf{Listas pequeñas inline}: guardar las listas de pocos IDs directamente como enteros, evitando los metadatos de contenedor, con un umbral calibrado para este índice.
+\item \textbf{Run containers e intersección adaptativa}: compresión de corridas de IDs consecutivos y búsqueda galloping para AND entre arrays muy desbalanceados~\cite{chambi2016,lemire2018}.
+\end{itemize}
+
+\section{Conclusiones}
+Se implementó desde cero el núcleo de Roaring Bitmaps (descomposición en clave alta y valor bajo, contenedores array y bitmap con umbral 4096, inserción con conversión, pertenencia, AND/OR para los tres pares de contenedores y normalización) y se aplicó a un índice invertido sobre todas las filas de Online Retail, con resultados idénticos a un recorrido completo.
+
+En espacio, los postings ocupan la mitad que los IDs de 32 bits, pero las listas pequeñas cuestan hasta 8,5 veces más por los metadatos. En tiempo, el índice responde entre 5 y más de 10\,000 veces más rápido que el scan, y el coste está dominado por el tamaño del resultado. Los controles sintéticos muestran que la densidad dentro de cada bloque y la distribución de los IDs entre bloques importan más que la cardinalidad total del conjunto.
+
+\appendix
+\section{Reproducción}
+Desde la raíz del repositorio:
+\begin{verbatim}
+python3 scripts/prepare_data.py
+cmake -S . -B build/release -DCMAKE_BUILD_TYPE=Release
+cmake --build build/release -j2
+ctest --test-dir build/release --output-on-failure
+python3 scripts/run_experiments.py \
+  --binary build/release/retail_benchmark \
+  --data data/prepared/online_retail.csv \
+  --output results/nueva_ejecucion
+python3 scripts/summarize_results.py results/nueva_ejecucion
+\end{verbatim}
+El directorio de salida debe ser nuevo. Si falta el XLSX, \verb|prepare_data.py --download| obtiene el archivo oficial.
+
+\begin{thebibliography}{9}
+\bibitem{chambi2016}
+S. Chambi, D. Lemire, O. Kaser y R. Godin. ``Better bitmap performance with Roaring bitmaps.'' \emph{Software: Practice and Experience}, 46(5), 709--719, 2016. \href{https://doi.org/10.1002/spe.2325}{doi:10.1002/spe.2325}.
+\bibitem{lemire2018}
+D. Lemire, O. Kaser, N. Kurz, L. Deri, C. O'Hara, F. Saint-Jacques y G. Ssi-Yan-Kai. ``Roaring bitmaps: Implementation of an optimized software library.'' \emph{Software: Practice and Experience}, 48(4), 867--895, 2018. \href{https://doi.org/10.1002/spe.2560}{doi:10.1002/spe.2560}.
+\bibitem{uci2015}
+D. Chen. \emph{Online Retail} [conjunto de datos]. UCI Machine Learning Repository, 2015. \href{https://doi.org/10.24432/C5BW33}{doi:10.24432/C5BW33}. CC BY 4.0.
+\bibitem{clickhouse2026}
+E. Ahmadov, J. Aguilar y G. Larionov. ``Building high-performance full-text search for object storage.'' ClickHouse Engineering, 2026. \url{https://clickhouse.com/blog/clickhouse-full-text-search-object-storage}.
+\end{thebibliography}
+\end{document}

@@ -1,0 +1,47 @@
+{
+  "canonical_run": "results/online_retail_2026_11_15_final",
+  "checks": [
+    "19 hashes de artefactos coinciden",
+    "15 hashes de fuentes coinciden",
+    "hashes de CSV preparado y binario coinciden",
+    "ambos PDF originales, main.tex y logo originales intactos",
+    "12 consultas, 360 muestras y 24 resumenes: igualdad marcada, min/mediana/p95/max recalculados",
+    "24 escenarios-operacion y 360 muestras sinteticas: igualdad marcada y medianas recalculadas",
+    "2348 postings y 16580 contenedores contados directamente",
+    "sumas de memoria por posting contrastadas con space.csv"
+  ],
+  "totals": {
+    "payload_bytes": 4779648,
+    "key_bytes": 33160,
+    "metadata_bytes": 951672,
+    "allocated_bytes": 8170956,
+    "flat32_bytes": 11770928,
+    "full_bitmap_bytes": 159051172,
+    "used_bytes": 5764480
+  },
+  "order_summary_roaring": {
+    "term_rare_order_1": {
+      "samples": 8,
+      "median_ns": 3419.0
+    },
+    "term_rare_order_0": {
+      "samples": 7,
+      "median_ns": 291
+    },
+    "term_missing_order_0": {
+      "samples": 8,
+      "median_ns": 213.0
+    },
+    "term_missing_order_1": {
+      "samples": 7,
+      "median_ns": 3030
+    }
+  },
+  "canonical_manifest_sha256": "813dcf06c5a21ef59b232cc638dea3b8b00de5124595fdc84e3e386203f82b23",
+  "protected_sha256": {
+    "informe/EDA_project.pdf": "78b86ae1ef6814a21008a3ce6b9140e6d814f57a13b12a8eb1c941b19be221d9",
+    "informe/main.tex": "98d2ee98325d5e458c95d6ec9ab27775fad4bc7fbddf4ca0762be76e63331c0c",
+    "CS3014_Estructuras_de_Datos_Avanzadas_Indicaciones_Proyecto_de_curso_entrega_1.pdf": "c828fc04ded12659d86e516a597b450c0f33c75d867e8564fa1f30ea584d10ed",
+    "informe/logo_utec.png/images.png": "12d317ae714c1408fe337e1b1fa5bd3a1b187b5ed6f28f20a80cca2e1d7e0c33"
+  }
+}

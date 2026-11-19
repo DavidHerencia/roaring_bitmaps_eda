@@ -1,0 +1,13 @@
+query_id,type,first,second,first_cardinality,second_cardinality,result_cardinality,result_blocks,array_blocks,bitmap_blocks,mean_block_density,min_block_density,max_block_density,ids_equal
+"term_rare",term,"100","",1,0,1,1,1,0,1.52587890625e-05,1.52587890625e-05,1.52587890625e-05,true
+"term_median",term,"peace","",171,0,171,9,9,0,0.0002899169921875,0.0001373291015625,0.0004425048828125,true
+"term_frequent",term,"set","",63431,0,63431,9,1,8,0.10754224989149305,0.0326690673828125,0.1275482177734375,true
+"country_rare",country,"saudi arabia","",10,0,10,1,1,0,0.000152587890625,0.000152587890625,0.000152587890625,true
+"country_frequent",country,"united kingdom","",495478,0,495478,9,0,9,0.84004380967881942,0.2513580322265625,0.9341888427734375,true
+"and_rare",and,"100","united kingdom",1,495478,1,1,1,0,1.52587890625e-05,1.52587890625e-05,1.52587890625e-05,true
+"and_median",and,"peace","united kingdom",171,495478,155,9,9,0,0.00026279025607638888,0.0001220703125,0.00042724609375,true
+"and_frequent",and,"set","united kingdom",63431,495478,56118,9,1,8,0.095143636067708329,0.030029296875,0.113037109375,true
+"or_rare_median",or,"100","peace",1,171,172,9,9,0,0.00029161241319444444,0.0001373291015625,0.0004425048828125,true
+"or_rare_frequent",or,"100","set",1,63431,63432,9,1,8,0.1075439453125,0.0326690673828125,0.1275634765625,true
+"or_median_frequent",or,"peace","set",171,63431,63602,9,1,8,0.10783216688368055,0.0329437255859375,0.1277923583984375,true
+"term_missing",term,"zzzzmissingterm","",0,0,0,0,0,0,0,0,0,true

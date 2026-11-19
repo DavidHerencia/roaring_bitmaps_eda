@@ -1,0 +1,140 @@
+{
+  "status": "passed",
+  "started_at_utc": "2026-11-16T04:13:18.419843+00:00",
+  "command": [
+    "/home/dh/utec-26-2/eda/project/roaring_bitmaps_eda_project/build/release/retail_benchmark",
+    "--data",
+    "/home/dh/utec-26-2/eda/project/roaring_bitmaps_eda_project/data/prepared/online_retail.csv",
+    "--output",
+    "/home/dh/utec-26-2/eda/project/roaring_bitmaps_eda_project/results/online_retail_2026_11_15_repeat",
+    "--repetitions",
+    "15",
+    "--warmup",
+    "3",
+    "--build-repetitions",
+    "3",
+    "--seed",
+    "20261115",
+    "--overwrite"
+  ],
+  "runner_arguments": [
+    "--binary",
+    "build/release/retail_benchmark",
+    "--data",
+    "data/prepared/online_retail.csv",
+    "--output",
+    "results/online_retail_2026_11_15_repeat"
+  ],
+  "platform": "Linux-6.18.52-1-lts-x86_64-with-glibc2.44",
+  "cpu": "Intel(R) Core(TM) i5-10300H CPU @ 2.50GHz",
+  "logical_cpu_count": 8,
+  "load_average_before": [
+    0.54248046875,
+    0.8369140625,
+    0.79296875
+  ],
+  "python": "3.14.7 (main, Aug 10 2026, 07:46:56) [GCC 16.1.1 20260728]",
+  "build": {
+    "CMAKE_BUILD_TYPE": "Release",
+    "CMAKE_CXX_COMPILER": "/usr/bin/c++",
+    "CMAKE_CXX_FLAGS": "",
+    "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+    "ENABLE_SANITIZERS": "OFF",
+    "compiler_version": "c++ (GCC) 16.2.1 20260810\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+  },
+  "binary_sha256": "94fac6922cf5a32922b172a42a3eb295a8cdcc3e973490045b6b660b5f8f721a",
+  "dataset": {
+    "path": "/home/dh/utec-26-2/eda/project/roaring_bitmaps_eda_project/data/prepared/online_retail.csv",
+    "sha256": "bdef3e7677bc08ee2567aa7eebe2bded0417427bab7ee7769dddb5ea2ebdc18e",
+    "source_manifest": {
+      "dataset": "Online Retail",
+      "citation": "Chen, D. (2015). Online Retail. UCI Machine Learning Repository. https://doi.org/10.24432/C5BW33",
+      "license": "CC BY 4.0",
+      "source_page": "https://archive.ics.uci.edu/dataset/352/online-retail",
+      "source_url": "https://archive.ics.uci.edu/static/public/352/online%2Bretail.zip",
+      "prepared_at_utc": "2026-11-16T04:00:54.807620+00:00",
+      "xlsx_file": "Online Retail.xlsx",
+      "xlsx_sha256": "43465a06f2ccf7c8b5bd2892bc7defb52f97487934fe93b16ae4c3936424676d",
+      "xlsx_sha256_verified": true,
+      "csv_file": "online_retail.csv",
+      "csv_sha256": "bdef3e7677bc08ee2567aa7eebe2bded0417427bab7ee7769dddb5ea2ebdc18e",
+      "row_count": 541909,
+      "row_id_min": 0,
+      "row_id_max": 541908,
+      "missing_description_rows": 1454,
+      "cancellation_rows": 9288,
+      "columns": [
+        "row_id",
+        "invoice_no",
+        "description",
+        "country"
+      ],
+      "filters": "none; preserve every worksheet data row in original order",
+      "archive_sha256": "f5385cbb54bbebf7196389109c6b0621faab0c304e3702548165e71c84aede8b",
+      "archive_cached_at_utc": "2026-11-16T03:57:56.256284+00:00"
+    }
+  },
+  "source_sha256": {
+    "CMakeLists.txt": "ef54afba6221438ad4e2b25da7e3ee134f88f7f7e3e62faba5144e1e931535dd",
+    "apps/retail_cli.cpp": "a16e029a77a85613453ad5d55f0c9d34d754ccd72861c5bdcb0cecc27bea0305",
+    "benchmarks/retail_benchmark.cpp": "f6e1ac59e811e7c120e54dc0874d64b111175803323126e2536ef523846c17df",
+    "benchmarks/test_experiments.py": "c609a0dabf86853b83e9fc3d545bb47dbfa5ef02a4bc8911507bf47e7adddb74",
+    "include/retail_index.hpp": "9d193a6aa9515e8e463a4e94b4155ec5b6f2595ae8dde1d959e642b15e8d543f",
+    "include/roaring_bitmap.hpp": "1953742fe86e11a3ac9fd295c5d148dc7063413ddfccc919cb877cf33f733b0b",
+    "scripts/prepare_data.py": "09ff4ad08bfbaacbf6d7a9f1376a6b2c9bebd42b08f21903ec607fc8d28fb68d",
+    "scripts/run_experiments.py": "82be7c659fc593ff007d052a595e03e96d689906078527393147b14dc94c3386",
+    "scripts/summarize_results.py": "dd8e2fe8cc2d34d5cb2afb5b89ca3987ddeff3d954be25a0a247b8b6aeb86728",
+    "src/retail_index.cpp": "40df64cf38bc06d7bfcc85ead6dd8f05960605a89182a131e00aedd11bc8d996",
+    "src/roaring_bitmap.cpp": "9f68dc1a2482f6ab361df80f8c3be7ce9e5a1e71c6ba5d3313e12bf91fe7f56f",
+    "tests/fixtures/retail.csv": "9b4199d9115176445c73238bff15168b2cef132284df1877d1f5e973141ef488",
+    "tests/test_prepare_data.py": "a5be350d321fa6b31aeeb1b82b8addab158eb5b77a70fa02f387b084ec772781",
+    "tests/test_retail_index.cpp": "2f438f5aec99dd02530c62657fc7c4530423446af2f7d91032507493710fd6e9",
+    "tests/test_roaring_bitmap.cpp": "a3dedca189136ca8ce956747c4c250d0334fca33d6251180ff6094f88f7a1c1f"
+  },
+  "git_head": "43ec402f7843c296b5fc610a8057b40ee8593880",
+  "git_status": "M .gitignore\n M README.md\n?? AGENTS.md\n?? CMakeLists.txt\n?? CS3014_Estructuras_de_Datos_Avanzadas_Indicaciones_Proyecto_de_curso_entrega_1.pdf\n?? apps/\n?? benchmarks/\n?? data/\n?? docs/\n?? include/\n?? informe/\n?? results/\n?? scripts/\n?? src/\n?? tests/",
+  "parameters": {
+    "repetitions": 15,
+    "warmup": 3,
+    "build_repetitions": 3,
+    "seed": 20261115
+  },
+  "timing_policy": "steady_clock; build excludes load/normalization/destruction; query materializes IDs; validation/IO outside timer",
+  "scan_policy": "same pre-normalized rows as index; no postings used",
+  "memory_policy": "logical posting payload/keys/metadata plus capacity model; dictionary separate; excludes allocator/RSS",
+  "sampling_policy": "deterministic rare/median/frequent from observed cardinality; fixed queries; alternating method order; warmups discarded",
+  "isolation": "no affinity/cache flush/CPU governor changes; observational local experiment",
+  "validation": {
+    "queries": 12,
+    "query_samples": 360,
+    "synthetic_samples": 360
+  },
+  "artifacts_sha256": {
+    "build_samples.csv": "fc36da9aea03d896288207cd5080b561d4cef0fb1421f5f12fe1b81f7e3b9d8b",
+    "containers.csv": "cf885ef3d6cbcbf2a0892bb21404e49601827b87f02ac59efccbb87ffaa1322d",
+    "dictionary.csv": "387ba66dc9366fbe4573e350618d2aaf3596eeec045efbb1457addab3f35bb3b",
+    "examples.csv": "21473a26bfe30ea37b795b11238f1f1762b86f8113148a60d7086479f035c301",
+    "latency_by_cardinality.csv": "7525334f4145de65ad2ce2b037be4a326c60b76214729e60ce63c111f9560392",
+    "latency_by_density.csv": "fe436e4de9a3fa13915c0c2c8afbf54c365aa9df0557eed734a7e1da18e380ea",
+    "phases.csv": "032b3505e18723b0cfbdfe63c02d3a56aeb10dc0df7b1e032f3eb79aa875e81e",
+    "postings.csv": "c67d0a300b5fe1df6db858ecfe9c2d91db6d57ad39a455598e9c5b0683f35794",
+    "queries.csv": "dd4eceef8788d12e10987abe752eb1dbd7437c5ccd676021745f897fcc6950ec",
+    "query_samples.csv": "b79a0439a786efd972110779fa59b03aa8f14d9db1b00c04c4ef8c837597785d",
+    "query_summary.csv": "f05178bb260211e58b489a7ee657a5d63e623db8efaa4b11484a04fe72435784",
+    "run.log": "91456037a98e73c85cd0efa261b6779406e5502e5367f5eb4fcf26bc82b75dc9",
+    "space.csv": "510704307a4e05eafa7e8610045373ef3240c8e357ca8f71dcbde8f2b58bc4e6",
+    "space_by_cardinality.csv": "f0cbcce4539095ae452734e96d72e85ab841641437841c201c855fd9c81b914c",
+    "space_by_density.csv": "dd2d22675c9ca4d463f40ce8f8a3ccc1400bd4c691c3509d1143e8f937368ec1",
+    "summary.json": "ef43ee0072b78c8422a4d8f9854f8590186891386027b6f404ec1f7e062ab714",
+    "summary.md": "25499a364f99a16c67c9ce496f85afbb6c6bb9c3a68be99cbcbb5421cf53f568",
+    "synthetic.csv": "036fe23c5e8750335b9e62866bb2761ffe133fe1ff460674982cf4b7ea2544f2",
+    "synthetic_summary.csv": "bc3a41c6e2b112e10cb584f3ae0c0f6cd76d5207013c53fe60da1315f39827e4"
+  },
+  "completed_at_utc": "2026-11-16T04:13:25.921906+00:00",
+  "wall_seconds": 7.425599,
+  "load_average_after": [
+    0.73974609375,
+    0.873046875,
+    0.80517578125
+  ]
+}

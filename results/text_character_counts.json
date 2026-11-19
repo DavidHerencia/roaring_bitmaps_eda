@@ -1,0 +1,9 @@
+{
+  "rows": 541909,
+  "non_ascii_description_rows": 32,
+  "non_ascii_country_rows": 0,
+  "non_ascii_description_characters": {
+    "£": 32
+  },
+  "interpretation": "the only non-ASCII character observed is the pound currency sign, a token separator; no non-ASCII letters/digits observed"
+}

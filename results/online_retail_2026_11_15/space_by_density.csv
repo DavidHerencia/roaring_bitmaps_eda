@@ -1,0 +1,7 @@
+namespace,density_group,blocks,cardinality,payload_bytes
+country,<=1%,201,21362,42724
+country,>1%-6.25%,23,25069,50138
+country,>25%,9,495478,73728
+term,<=1%,15558,1100388,2200776
+term,>1%-6.25%,733,976765,1953530
+term,>6.25%-25%,56,323670,458752
